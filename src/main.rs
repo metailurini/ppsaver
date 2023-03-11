@@ -1,8 +1,3 @@
-#[macro_use]
-mod logg;
-mod manner;
-mod storage;
-
 use crate::storage::Storage;
 use colored::Colorize;
 use cronjob::CronJob;
@@ -18,13 +13,17 @@ use std::path::Path;
 use std::sync::Mutex;
 use storage::RMS;
 
-static MEM_DB: Lazy<Mutex<RMS>> = Lazy::new(|| Mutex::new(RMS::init()));
-
-const MAILING_ADDRESSES: &str = "mailing_addresses";
+#[macro_use]
+mod logg;
+mod manner;
+mod storage;
 
 #[macro_use]
 extern crate rocket;
-extern crate cronjob;
+
+static MEM_DB: Lazy<Mutex<RMS>> = Lazy::new(|| Mutex::new(RMS::init()));
+
+const MAILING_ADDRESSES: &str = "mailing_addresses";
 
 fn get<T>(db: &'static Lazy<Mutex<T>>, key: String) -> Option<String>
 where
