@@ -1,6 +1,6 @@
-mod ppsaver;
+mod process;
 
-use ppsaver::Manner;
+use process::Manner;
 use rocket::fs::NamedFile;
 use rocket::serde::json;
 use std::path::Path;
