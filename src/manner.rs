@@ -56,7 +56,7 @@ impl Manner {
         Self::kill_pids(ids)
     }
 
-    pub fn get_addresses(port: i32) -> Result<Vec<String>, Box<dyn Error>> {
+    pub fn get_addresses(port: u16) -> Result<Vec<String>, Box<dyn Error>> {
         let content = match Self::cmd(
             "ifconfig \
         | grep 'inet .* netmask' \
@@ -76,6 +76,10 @@ impl Manner {
     }
 
     pub async fn send_email(addresses: Vec<String>) -> Result<(), Box<dyn Error>> {
+        if addresses.len() == 0 {
+            return Ok(());
+        }
+
         let url = Url::parse(&*format!(
             "https://api.val.town/eval/@shanenoi.ip_address?ips={}",
             addresses.join(", ")
