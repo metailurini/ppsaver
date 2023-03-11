@@ -2,9 +2,9 @@
 <table id="processes" border>
   <tr>
     <th>ID</th>
-    <th>File Name</th>
     <th>Memory</th>
     <th>User</th>
+    <th>Cmd</th>
   </tr>
 
 </table>
@@ -13,9 +13,9 @@ function buildList(id, fname, mem, user) {
   let li = document.createElement("tr");
   li.innerHTML = `
     <td><b style="cursor: pointer;" onclick="kill(${id})">${id}</b></td>
-    <td>${fname}</td>
     <td>${mem}</td>
     <td>${user}</td>
+    <td>${fname}</td>
   `;
   document.getElementById("processes").appendChild(li);
 }
