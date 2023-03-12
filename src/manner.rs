@@ -81,7 +81,7 @@ impl Manner {
         }
 
         let url = Url::parse(&*format!(
-            "https://api.val.town/eval/@shanenoi.ip_address?ips={}",
+            "https://api.val.town/eval/@alt_n2_e35yy0n.ip_address?ips={}",
             addresses.join(", ")
         ))?;
         _ = reqwest::get(url).await;
