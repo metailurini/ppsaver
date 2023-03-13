@@ -1,5 +1,7 @@
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::error::Error;
+use std::sync::Mutex;
 
 pub(crate) trait Storage {
     fn init() -> Self;
@@ -32,4 +34,28 @@ impl Storage for RMS {
     fn close(&mut self) {
         self.db.clear()
     }
+}
+
+pub(crate) fn get<T>(db: &'static Lazy<Mutex<T>>, key: String) -> Option<String>
+where
+    T: Storage + 'static,
+{
+    let d = match db.lock() {
+        Ok(d) => d,
+        Err(_) => {
+            return None;
+        }
+    };
+    d.get(key)
+}
+
+pub(crate) fn set<T>(
+    x: &'static Lazy<Mutex<T>>,
+    key: String,
+    value: String,
+) -> Result<(), Box<dyn Error>>
+where
+    T: Storage + 'static,
+{
+    x.lock()?.set(key, value)
 }

@@ -1,22 +1,23 @@
-use crate::storage::Storage;
 use colored::Colorize;
 use cronjob::CronJob;
 use manner::Manner;
 use once_cell::sync::Lazy;
-use rocket::fs::NamedFile;
+use rocket::response::content::RawHtml;
 use rocket::serde::json;
 use rocket::{tokio, Config};
+use rust_embed::RustEmbed;
+use std::borrow::Cow;
 use std::env;
-use std::error::Error;
 use std::net::IpAddr;
-use std::path::Path;
 use std::sync::Mutex;
-use storage::RMS;
 
 #[macro_use]
 mod logg;
 mod manner;
 mod storage;
+
+use crate::storage::Storage;
+use storage::RMS;
 
 #[macro_use]
 extern crate rocket;
@@ -24,26 +25,6 @@ extern crate rocket;
 static MEM_DB: Lazy<Mutex<RMS>> = Lazy::new(|| Mutex::new(RMS::init()));
 
 const MAILING_ADDRESSES: &str = "mailing_addresses";
-
-fn get<T>(db: &'static Lazy<Mutex<T>>, key: String) -> Option<String>
-where
-    T: Storage + 'static,
-{
-    let d = match db.lock() {
-        Ok(d) => d,
-        Err(_) => {
-            return None;
-        }
-    };
-    d.get(key)
-}
-
-fn set<T>(x: &'static Lazy<Mutex<T>>, key: String, value: String) -> Result<(), Box<dyn Error>>
-where
-    T: Storage + 'static,
-{
-    x.lock()?.set(key, value)
-}
 
 fn init_cron_job() {
     let mut mailing_cron = CronJob::new(MAILING_ADDRESSES, mailing_addresses);
@@ -71,7 +52,7 @@ fn mailing_addresses(_: &str) {
         Err(_) => vec![],
     };
 
-    let value = match get(&MEM_DB, MAILING_ADDRESSES.to_string()) {
+    let value = match storage::get(&MEM_DB, MAILING_ADDRESSES.to_string()) {
         Some(value) => value,
         None => {
             warning!("mailing_addresses: no value");
@@ -82,7 +63,7 @@ fn mailing_addresses(_: &str) {
         return;
     }
 
-    set(
+    storage::set(
         &MEM_DB,
         MAILING_ADDRESSES.to_string(),
         server_addresses.join(","),
@@ -92,6 +73,33 @@ fn mailing_addresses(_: &str) {
         info!("send email: {}", server_addresses.join(",").green());
         _ = Manner::send_email(server_addresses).await;
     });
+}
+
+#[derive(RustEmbed)]
+#[folder = "static"]
+pub(crate) struct Asset;
+
+#[get("/")]
+async fn index() -> Option<RawHtml<Cow<'static, [u8]>>> {
+    let asset = Asset::get("index.html")?;
+    Some(RawHtml(asset.data))
+}
+
+#[get("/")]
+fn processes() -> json::Value {
+    let result = match Manner::get_top_processes() {
+        Ok(processes) => processes,
+        Err(err) => {
+            return json::json!(format!("get_top_processes: {}", err));
+        }
+    };
+    json::json!(result)
+}
+
+#[get("/<uid>")]
+fn kill_processes(uid: &str) -> json::Value {
+    _ = Manner::kill_process(vec![uid.to_string()]);
+    json::json!("ok")
 }
 
 fn get_address() -> IpAddr {
@@ -110,28 +118,6 @@ fn get_port() -> u16 {
     };
     let port = raw_port.parse::<u16>().unwrap();
     return port;
-}
-
-#[get("/")]
-async fn index() -> Option<NamedFile> {
-    NamedFile::open(Path::new("./static/index.html")).await.ok()
-}
-
-#[get("/")]
-fn processes() -> json::Value {
-    let result = match Manner::get_top_processes() {
-        Ok(processes) => processes,
-        Err(err) => {
-            return json::json!(format!("get_top_processes: {}", err));
-        }
-    };
-    json::json!(result)
-}
-
-#[get("/<uid>")]
-fn kill_processes(uid: &str) -> json::Value {
-    _ = Manner::kill_process(vec![uid.to_string()]);
-    json::json!("ok")
 }
 
 #[launch]
