@@ -3,14 +3,14 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::sync::Mutex;
 
-pub(crate) trait Storage {
+pub trait Storage {
     fn init() -> Self;
     fn get(&self, key: String) -> Option<String>;
     fn set(&mut self, key: String, value: String) -> Result<(), Box<dyn Error>>;
     fn close(&mut self);
 }
 
-pub(crate) struct RMS {
+pub struct RMS {
     db: HashMap<String, String>,
 }
 
@@ -36,7 +36,7 @@ impl Storage for RMS {
     }
 }
 
-pub(crate) fn get<T>(db: &'static Lazy<Mutex<T>>, key: String) -> Option<String>
+pub fn get<T>(db: &'static Lazy<Mutex<T>>, key: String) -> Option<String>
 where
     T: Storage + 'static,
 {
@@ -49,11 +49,7 @@ where
     d.get(key)
 }
 
-pub(crate) fn set<T>(
-    x: &'static Lazy<Mutex<T>>,
-    key: String,
-    value: String,
-) -> Result<(), Box<dyn Error>>
+pub fn set<T>(x: &'static Lazy<Mutex<T>>, key: String, value: String) -> Result<(), Box<dyn Error>>
 where
     T: Storage + 'static,
 {
