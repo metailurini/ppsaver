@@ -1,20 +1,30 @@
-use reqwest::Url;
-use rocket::serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::process::{Command, Output};
 
+use rocket::serde::{Deserialize, Serialize};
+
 #[derive(Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
-pub(crate) struct Process {
+pub struct Process {
     id: String,
     user: String,
     mem: String,
     fname: String,
 }
 
-pub(crate) struct Manner {}
+pub struct Manner {
+    telegram_url: String,
+    telegram_chat_id: f64,
+}
 
 impl Manner {
+    pub fn new() -> Self {
+        Self {
+            telegram_url: "".to_string(),
+            telegram_chat_id: 0 as f64,
+        }
+    }
+
     pub fn get_top_processes() -> Result<Vec<Process>, Box<dyn Error>> {
         let output = match Self::cmd(
             "ps -eo pid,user,%mem,cmd --sort=-%mem \
@@ -75,16 +85,43 @@ impl Manner {
             .collect())
     }
 
-    pub async fn send_email(addresses: Vec<String>) -> Result<(), Box<dyn Error>> {
+    pub async fn send_notification(&self, addresses: Vec<String>) -> Result<(), Box<dyn Error>> {
         if addresses.len() == 0 {
             return Ok(());
         }
 
-        let url = Url::parse(&*format!(
-            "https://api.val.town/eval/@alt_n2_e35yy0n.ip_address?ips={}",
-            addresses.join(", ")
-        ))?;
-        _ = reqwest::get(url).await;
+        self.telegrapher(format!(
+            "we found IP address in your network:\n+{}",
+            addresses.join("\n+")
+        ))
+        .await
+    }
+
+    pub fn with_telegram_url(mut self, telegram_url: String) -> Self {
+        self.telegram_url = telegram_url;
+        self
+    }
+
+    pub fn with_telegram_chat_id(mut self, telegram_chat_id: f64) -> Self {
+        self.telegram_chat_id = telegram_chat_id;
+        self
+    }
+
+    async fn telegrapher(&self, message: String) -> Result<(), Box<dyn Error>> {
+        let client = reqwest::Client::new();
+        _ = client
+            .post(self.telegram_url.as_str())
+            .body(format!(
+                "{{
+                \"chat_id\": {},
+                \"text\": \"{}\",
+            }}",
+                self.telegram_chat_id, message
+            ))
+            .header("Content-Type", "application/json")
+            .send()
+            .await?;
+
         Ok(())
     }
 
