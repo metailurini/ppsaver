@@ -6,7 +6,7 @@ This is an application that helps you force stop some heavy processes which make
 
 `ppsaver` is an application designed to help you force stop heavy processes which make your computer freeze.
 
-In addition to this, the application includes a feature that allows it to watch for changes to the IP address and send notifications contains list of addresses (currently only supporting Telegram channels) when the IP address changes. Users can then access a dashboard by visiting one of the addresses in the list and close any heavy process by clicking on its PID number.
+In addition to this, the application includes a feature that allows it to watch for changes to the IP address and send notifications contains list of addresses (_**currently only supporting Telegram channels**_) when the IP address changes. Users can then access a dashboard by visiting one of the addresses in the list and close any heavy process by clicking on its PID number.
 
 This application is written in Rust and can be easily installed by following the installation instructions provided below. The ppsaver application is open source and contributions are welcome. If you encounter any issues or have any suggestions for improvement, please submit a pull request or open an issue on the project's GitHub page.
 
