@@ -19,11 +19,16 @@ fn notify(addresses: Vec<String>) {
 
     rt.block_on(async {
         info!("send notification: {}", addresses.join(",").green());
-        _ = Manner::new()
+        let result = Manner::new()
             .with_telegram_url(envs::get_telegram_url())
             .with_telegram_chat_id(envs::get_telegram_chat_id())
             .send_notification(addresses)
             .await;
+
+        match result {
+            Err(err) => error!("error: {}", err),
+            _ => {}
+        }
     });
 }
 

@@ -108,6 +108,10 @@ impl Manner {
     }
 
     async fn telegrapher(&self, message: String) -> Result<(), Box<dyn Error>> {
+        if self.telegram_url.as_str().len() == 0 || self.telegram_chat_id == 0 as f64 {
+            return Err("telegram_url or telegram_chat_id is empty".into());
+        }
+
         let client = reqwest::Client::new();
         _ = client
             .post(self.telegram_url.as_str())
