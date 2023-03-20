@@ -22,17 +22,14 @@ pub fn get_port() -> u16 {
 pub fn get_telegram_url() -> String {
     match env::var("TELEGRAM_URL") {
         Ok(telegram_url) => telegram_url,
-        Err(_) => {
-            "https://api.telegram.org/bot2033718725:AAE7JSAxAYOg_C24JX2afxBZ69SSvdHLMbc/sendMessage"
-                .to_string()
-        }
+        Err(_) => "".to_string(),
     }
 }
 
 pub fn get_telegram_chat_id() -> f64 {
     let telegram_chat_id = match env::var("TELEGRAM_CHAT_ID") {
         Ok(telegram_chat_id) => telegram_chat_id,
-        Err(_) => "-932106319".to_string(),
+        Err(_) => "0".to_string(),
     };
     let chat_id = telegram_chat_id.parse::<f64>().unwrap();
     return chat_id;
