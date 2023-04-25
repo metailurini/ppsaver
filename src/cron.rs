@@ -27,7 +27,7 @@ fn notify(addresses: Vec<String>) {
 
         match result {
             Err(err) => error!("error: {}", err),
-            _ => {}
+            Ok(resp) => info!("response: {}", resp),
         }
     });
 }

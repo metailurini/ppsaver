@@ -85,16 +85,21 @@ impl Manner {
             .collect())
     }
 
-    pub async fn send_notification(&self, addresses: Vec<String>) -> Result<(), Box<dyn Error>> {
+    pub async fn send_notification(
+        &self,
+        addresses: Vec<String>,
+    ) -> Result<String, Box<dyn Error>> {
         if addresses.len() == 0 {
-            return Ok(());
+            return Ok("".to_string());
         }
 
-        self.telegrapher(format!(
-            "we found IP address in your network:\n+{}",
-            addresses.join("\n+")
-        ))
-        .await
+        let mut message = String::new();
+        for (index, value) in addresses.iter().enumerate() {
+            message.push_str(&format!("\\\\+ [url\\\\.{}]({})\n", index + 1, value));
+        }
+
+        self.telegrapher(format!("we found IP address in your network:\n{}", message))
+            .await
     }
 
     pub fn with_telegram_url(mut self, telegram_url: String) -> Self {
@@ -107,26 +112,27 @@ impl Manner {
         self
     }
 
-    async fn telegrapher(&self, message: String) -> Result<(), Box<dyn Error>> {
+    async fn telegrapher(&self, message: String) -> Result<String, Box<dyn Error>> {
         if self.telegram_url.as_str().len() == 0 || self.telegram_chat_id == 0 as f64 {
             return Err("telegram_url or telegram_chat_id is empty".into());
         }
 
         let client = reqwest::Client::new();
-        _ = client
+        let resp = client
             .post(self.telegram_url.as_str())
             .body(format!(
                 "{{
-                \"chat_id\": {},
-                \"text\": \"{}\",
-            }}",
+                    \"chat_id\": {},
+                    \"text\": \"{}\",
+                    \"parse_mode\": \"MarkdownV2\"
+                }}",
                 self.telegram_chat_id, message
             ))
             .header("Content-Type", "application/json")
             .send()
             .await?;
 
-        Ok(())
+        Ok(resp.text().await?)
     }
 
     fn kill_pids(pids: Vec<String>) -> Result<(), Box<dyn Error>> {
